@@ -652,27 +652,28 @@ jobs:
           CHANNEL: ${{ needs.prerelease-publish.outputs.channel }}
         run: |
           # A freshly published version is not resolvable by the registry's
-          # read path for a while, so `npm install` fails with ETARGET until
-          # the change propagates. Wait for the version to become visible
-          # before installing, and keep retrying the install itself for the
-          # tarball to become downloadable.
-          for attempt in $(seq 1 30); do
-            if npm view "@monsterbude/gsd-brower-monster@${PUBLISH_VERSION}" version >/dev/null 2>&1; then
+          # read path for a while — the packument is served from a cache that
+          # can lag the publish by many minutes — so `npm install` fails with
+          # ETARGET until the change propagates. Wait for the version to become
+          # visible before installing, and keep retrying the install itself so
+          # the tarball has time to become downloadable.
+          for attempt in $(seq 1 90); do
+            if npm view "@monsterbude/gsd-brower-monster@${PUBLISH_VERSION}" version; then
               echo "Registry sees ${PUBLISH_VERSION} after ${attempt} check(s)."
               break
             fi
-            echo "Registry has not published ${PUBLISH_VERSION} yet (check ${attempt}/30) - waiting 10s..."
+            echo "Registry has not published ${PUBLISH_VERSION} yet (check ${attempt}/90) - waiting 10s..."
             sleep 10
           done
 
-          for attempt in $(seq 1 12); do
+          for attempt in $(seq 1 20); do
             if npm install -g "@monsterbude/gsd-brower-monster@${PUBLISH_VERSION}"; then
               exit 0
             fi
-            echo "Install attempt ${attempt}/12 failed - waiting 15s for npm registry propagation..."
+            echo "Install attempt ${attempt}/20 failed - waiting 15s for npm registry propagation..."
             sleep 15
           done
-          echo "::error::Failed to install @monsterbude/gsd-brower-monster@${PUBLISH_VERSION} after 12 attempts."
+          echo "::error::Failed to install @monsterbude/gsd-brower-monster@${PUBLISH_VERSION} after 20 attempts."
           echo "::error::Recommended actions: (1) investigate the failing step above, (2) if the version exists on npm, deprecate it with 'npm deprecate @monsterbude/gsd-brower-monster@${PUBLISH_VERSION} \"broken ${CHANNEL} build; see Actions run\"', (3) cut a fix and re-run NPM Publish."
           exit 1
 
