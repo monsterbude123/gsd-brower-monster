@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `--output file.png` now writes PNG bytes. The output path's extension decides the encoding, so a `.png` file no longer holds a JPEG — a file that no image viewer would open correctly. The `--format` flag still applies when the path names no image format.
 - Element crops are no longer forced to PNG. They follow the same extension rule as every other capture, so `--selector "#id" --output crop.jpg` writes a real JPEG.
 - The npm publish workflow promotes the release to `@latest` again. The verification job that gates the promotion inherited the skip of an upstream job that was itself skipped, so in token-auth mode the version was published to `@dev` and `@latest` silently stayed on the previous release.
+- The npm publish workflow no longer fails when the registry is slow to serve a freshly published version. The registry's read path can lag a publish by many minutes, so the verification install failed with `ETARGET` and the promotion step read the previous dist-tag right after writing the new one. Both now wait for the registry to catch up.
 
 ### Changed
 

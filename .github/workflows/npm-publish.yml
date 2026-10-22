@@ -790,12 +790,21 @@ jobs:
             exit 0
           fi
           npm dist-tag add "@monsterbude/gsd-brower-monster@${VERSION}" latest
-          TAGGED=$(npm view "@monsterbude/gsd-brower-monster" "dist-tags.latest" 2>/dev/null || true)
-          if [ "${TAGGED}" != "${VERSION}" ]; then
-            echo "::error::@latest points to '${TAGGED:-<unset>}' not ${VERSION} after promotion."
-            exit 1
-          fi
-          echo "Confirmed: @latest -> ${VERSION}."
+          # The dist-tag is written straight away, but the registry serves the
+          # packument from a cache that can lag the change by minutes, so a
+          # read right after the write still reports the previous tag. Poll
+          # until the read reflects the promotion.
+          for attempt in $(seq 1 24); do
+            TAGGED=$(npm view "@monsterbude/gsd-brower-monster" "dist-tags.latest" 2>/dev/null || true)
+            if [ "${TAGGED}" = "${VERSION}" ]; then
+              echo "Confirmed: @latest -> ${VERSION}."
+              exit 0
+            fi
+            echo "Waiting for npm @latest propagation (${attempt}/24): currently '${TAGGED:-<unset>}'."
+            sleep 5
+          done
+          echo "::error::@latest points to '${TAGGED:-<unset>}' not ${VERSION} after promotion."
+          exit 1
 
   finalize-github-release:
     name: Finalize GitHub Release
