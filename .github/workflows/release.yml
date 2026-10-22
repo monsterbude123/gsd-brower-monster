@@ -49,12 +49,21 @@ jobs:
       - name: Resolve release tag
         id: release_ref
         env:
-          RAW_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_TAG: ${{ inputs.tag }}
+          REF_NAME: ${{ github.ref_name }}
           VERSION_BUMP: ${{ github.event_name == 'workflow_dispatch' && inputs.version_bump || 'patch' }}
           RELEASE_VERSION: ${{ github.event_name == 'workflow_dispatch' && inputs.version || '' }}
           GITHUB_TOKEN: ${{ github.token }}
         run: |
-          tag="${RAW_TAG#refs/tags/}"
+          # A blank tag on a manual run means "bump the version and tag it".
+          # Reading the tag from `github.ref_name` when the input is empty would
+          # yield the branch name instead, so the two sources are kept apart.
+          if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
+            tag="$INPUT_TAG"
+          else
+            tag="${REF_NAME#refs/tags/}"
+          fi
 
           if [[ -z "$tag" ]]; then
             version="$(node scripts/bump-release-version.js)"

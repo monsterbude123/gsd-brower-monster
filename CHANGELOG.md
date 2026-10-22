@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Windows: the daemon no longer inherits the spawning CLI's standard handles. Rust passes `bInheritHandles = TRUE` on Windows, so a daemon started by a CLI whose stdout was a pipe kept that pipe's write end open for its whole lifetime — piping any command's output (`gsd-browser navigate <url> | head`) hung forever instead of ending at EOF.
 - Windows: the CLI no longer overflows the main thread stack in debug builds. Windows gives the main thread a 1 MB stack, which the command tree clap derives from ~100 subcommands overflows, so every invocation — even `--version` — died with a stack overflow. The CLI now runs on a thread with a roomier stack.
 - Windows: `npm run build` no longer fails with `ERR_INVALID_ARG_TYPE`. It spawns `npm.cmd`, which Node refuses to launch without a shell since the CVE-2024-27980 fix, so the pack check never ran and `npm publish` was blocked on Windows.
+- The Release workflow's "leave the tag blank to auto-bump" mode works again. It read the tag with `github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name`, and an empty `inputs.tag` is falsy, so the expression fell through to the branch name and the run failed with "Release tag 'main' must be a semver tag". The two sources are now read separately.
 
 ### Changed
 
