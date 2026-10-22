@@ -344,3 +344,6 @@ jobs:
       channel: latest
       tag: ${{ needs.release_input.outputs.tag_name }}
       dry_run: false
+      # This fork authenticates with the NPM_TOKEN repository secret. Switch to
+      # "trusted" once npm has a trusted publisher configured for this package.
+      publish_auth: token
