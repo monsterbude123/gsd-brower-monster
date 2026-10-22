@@ -124,8 +124,8 @@ gsd-browser click-ref @v1:e1
 gsd-browser wait-for --condition network_idle
 gsd-browser assert --checks '[{"kind":"url_contains","text":"iana.org"}]'
 
-# Capture a PNG
-gsd-browser screenshot --output page.png --format png
+# Capture a PNG — the file extension picks the format
+gsd-browser screenshot --output page.png
 ```
 
 For the modern agent experience, prefer the MCP server (see top of this README).

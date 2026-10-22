@@ -236,7 +236,7 @@ gsd-browser recording-export <id> --output ./evidence/
 
 ```bash
 gsd-browser screenshot --output page.png --full-page
-gsd-browser screenshot --selector "#hero" --format png
+gsd-browser screenshot --selector "#hero" --output hero.png
 gsd-browser screenshot --save
 gsd-browser save-pdf --output report.pdf --format A4
 gsd-browser zoom-region ...

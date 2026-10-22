@@ -19,6 +19,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Windows: `npm run build` no longer fails with `ERR_INVALID_ARG_TYPE`. It spawns `npm.cmd`, which Node refuses to launch without a shell since the CVE-2024-27980 fix, so the pack check never ran and `npm publish` was blocked on Windows.
 - The Release workflow's "leave the tag blank to auto-bump" mode works again. It read the tag with `github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name`, and an empty `inputs.tag` is falsy, so the expression fell through to the branch name and the run failed with "Release tag 'main' must be a semver tag". The two sources are now read separately.
 - Screenshot dimensions are now read from the captured image instead of measured from the DOM. The DOM reports the layout viewport, which excludes the scrollbar, so a full-page capture was described as 1904x929 while the file it wrote was 1920x1080. The reported size now always matches the image on disk.
+- `--output file.png` now writes PNG bytes. The output path's extension decides the encoding, so a `.png` file no longer holds a JPEG — a file that no image viewer would open correctly. The `--format` flag still applies when the path names no image format.
+- Element crops are no longer forced to PNG. They follow the same extension rule as every other capture, so `--selector "#id" --output crop.jpg` writes a real JPEG.
+- The npm publish workflow promotes the release to `@latest` again. The verification job that gates the promotion inherited the skip of an upstream job that was itself skipped, so in token-auth mode the version was published to `@dev` and `@latest` silently stayed on the previous release.
 
 ### Changed
 

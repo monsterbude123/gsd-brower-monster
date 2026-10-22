@@ -13,7 +13,7 @@ This is not "just another browser tool". It is designed for serious, auditable, 
 - **Prompts** (robust_login_flow, full_page_audit, create_evidence_bundle, autonomous_research_task, evidence_creation_workflow, debug_stuck_agent_flow) — rich executable multi-step workflows with best-practice guidance built in.
 - Powerful standardized response envelopes on every tool call: `summary`, `structured_data`, `suggested_next_actions` (high-signal hints), `evidence_refs`, plus raw fallback.
 - Full reuse of the battle-tested daemon client: auto-start, named sessions, error handling, JSON fidelity.
-- **Screenshots as files, not text**: `browser_screenshot` accepts `output` (write to a path) or `save` (write into the artifacts directory under a generated name). The daemon writes the image bytes and the tool returns the path plus dimensions — no base64 blob in the envelope. Pass `include_data: true` when you actually want the base64 payload.
+- **Screenshots as files, not text**: `browser_screenshot` accepts `output` (write to a path) or `save` (write into the artifacts directory under a generated name). The daemon writes the image bytes and the tool returns the path plus dimensions — no base64 blob in the envelope. Pass `include_data: true` when you actually want the base64 payload. The output path's extension picks the encoding, so `output: "shot.png"` writes a real PNG.
 
 See the full current surface by connecting your MCP client to `gsd-browser mcp` and calling `tools/list`, `resources/list`, `prompts/list`.
 

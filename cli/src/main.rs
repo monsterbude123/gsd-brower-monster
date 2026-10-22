@@ -246,7 +246,7 @@ enum Commands {
     },
     /// Take a screenshot of the current page or a specific element
     Screenshot {
-        /// CSS selector for element crop (produces PNG)
+        /// CSS selector for element crop
         #[arg(long)]
         selector: Option<String>,
         /// Capture full scrollable page
@@ -261,9 +261,11 @@ enum Commands {
         /// Write into the artifacts directory under a generated name
         #[arg(long)]
         save: bool,
-        /// Image format: jpeg or png (default: jpeg)
-        #[arg(long, default_value = "jpeg")]
-        format: String,
+        /// Image format: jpeg or png (default: jpeg). The output file's
+        /// extension wins when it names an image format, so `--output a.png`
+        /// writes PNG bytes.
+        #[arg(long)]
+        format: Option<String>,
     },
     /// Get the accessibility tree of the page (roles, names, states)
     AccessibilityTree {
@@ -1090,7 +1092,7 @@ async fn run() {
                 *quality,
                 output.as_deref(),
                 *save,
-                format,
+                format.as_deref(),
             )
             .await
         }
@@ -1853,15 +1855,19 @@ async fn cmd_screenshot(
     quality: u32,
     output_path: Option<&str>,
     save: bool,
-    format: &str,
+    format: Option<&str>,
 ) -> CmdResult {
     let mut params = serde_json::json!({
         "full_page": full_page,
         "quality": quality,
-        "format": format,
     });
     if let Some(sel) = selector {
         params["selector"] = serde_json::json!(sel);
+    }
+    // The format is only forwarded when the caller named one. Leaving it out
+    // lets the daemon let the output path's extension decide the encoding.
+    if let Some(fmt) = format {
+        params["format"] = serde_json::json!(fmt);
     }
     if save {
         params["save"] = serde_json::json!(true);

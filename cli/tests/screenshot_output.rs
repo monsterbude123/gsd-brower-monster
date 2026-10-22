@@ -369,6 +369,47 @@ fn screenshot_element_crop_is_written_as_png() {
 }
 
 #[test]
+fn the_output_extension_decides_the_encoding() {
+    let _guard = browser_test_lock()
+        .lock()
+        .unwrap_or_else(|poison| poison.into_inner());
+    let env = BrowserTestEnv::new("ext-format");
+    let server = test_server();
+    open_page(&env, &server.base_url());
+
+    // A `.png` path has to hold PNG bytes — a JPEG file wearing a `.png` name
+    // is a broken image, whatever the format flag says.
+    let target = env.home.join("named.png");
+    let result = env.json(&[
+        "screenshot".to_string(),
+        "--output".to_string(),
+        target.to_string_lossy().to_string(),
+    ]);
+
+    assert_eq!(result["mimeType"], "image/png");
+    let bytes = fs::read(&target).expect("png screenshot written");
+    assert!(
+        is_png(&bytes),
+        "expected PNG magic bytes in a file named .png"
+    );
+
+    // The same capture with a `.jpg` extension gets JPEG bytes.
+    let target = env.home.join("named.jpg");
+    let result = env.json(&[
+        "screenshot".to_string(),
+        "--output".to_string(),
+        target.to_string_lossy().to_string(),
+    ]);
+
+    assert_eq!(result["mimeType"], "image/jpeg");
+    let bytes = fs::read(&target).expect("jpeg screenshot written");
+    assert!(
+        is_jpeg(&bytes),
+        "expected JPEG magic bytes in a file named .jpg"
+    );
+}
+
+#[test]
 fn screenshot_reports_the_dimensions_of_the_png_it_wrote() {
     let _guard = browser_test_lock()
         .lock()

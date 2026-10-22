@@ -8,20 +8,23 @@ use std::io::Cursor;
 use std::path::{Path, PathBuf};
 use tracing::debug;
 
-/// Handle screenshot capture — viewport JPEG (default), element PNG, or full-page JPEG.
+/// Handle screenshot capture — viewport JPEG (default), element crop, or full-page JPEG.
 ///
 /// Params:
-///   selector     (string, optional) — CSS selector for element crop (forces PNG)
+///   selector     (string, optional) — CSS selector for element crop
 ///   full_page    (bool, default false) — capture entire scrollable page
 ///   quality      (u32, default 80) — JPEG compression quality 1-100
-///   format       (string, default "jpeg") — "jpeg" or "png"
+///   format       (string, optional) — "jpeg" or "png"; decides the encoding
+///                                       when the output path does not name one
 ///   output       (string, optional) — write the raw image bytes to this path
 ///   save         (bool, default false) — write to a generated name in the
 ///                                       artifacts directory
 ///   include_data (bool, optional) — force the base64 payload into the response
 ///
-/// When the capture is written to disk the response carries `path` and omits the
-/// base64 payload, so a large screenshot never crosses the IPC boundary as text.
+/// The output path's extension decides the encoding, so `--output shot.png`
+/// really writes PNG bytes. When the capture is written to disk the response
+/// carries `path` and omits the base64 payload, so a large screenshot never
+/// crosses the IPC boundary as text.
 pub async fn handle_screenshot(page: &Page, params: &Value) -> Result<Value, String> {
     let selector = params
         .get("selector")
@@ -33,10 +36,11 @@ pub async fn handle_screenshot(page: &Page, params: &Value) -> Result<Value, Str
         .and_then(|v| v.as_bool())
         .unwrap_or(false);
     let quality = params.get("quality").and_then(|v| v.as_u64()).unwrap_or(80) as i64;
-    let format_str = params
+    let requested_format = params
         .get("format")
         .and_then(|v| v.as_str())
-        .unwrap_or("jpeg");
+        .map(str::trim)
+        .filter(|s| !s.is_empty());
     let output = params
         .get("output")
         .and_then(|v| v.as_str())
@@ -47,9 +51,15 @@ pub async fn handle_screenshot(page: &Page, params: &Value) -> Result<Value, Str
         .and_then(|v| v.as_bool())
         .unwrap_or(false);
 
-    let capture = capture_image(page, selector, full_page, quality, format_str).await?;
+    // The file the caller will open decides the encoding. A `.png` path that
+    // holds JPEG bytes is a broken image no matter what the format flag says.
+    let format = resolve_format(requested_format, output);
 
-    let extension = if capture.mime_type == "image/png" {
+    let capture = capture_image(page, selector, full_page, quality, format).await?;
+
+    // The bytes on disk are the source of truth for the reported type.
+    let mime_type = sniff_mime_type(&capture.bytes).unwrap_or(capture.mime_type);
+    let extension = if mime_type == "image/png" {
         "png"
     } else {
         "jpg"
@@ -66,7 +76,7 @@ pub async fn handle_screenshot(page: &Page, params: &Value) -> Result<Value, Str
         .unwrap_or(destination.is_none());
 
     let mut response = json!({
-        "mimeType": capture.mime_type,
+        "mimeType": mime_type,
         "width": capture.width,
         "height": capture.height,
         "scope": capture.scope,
@@ -105,15 +115,92 @@ struct Capture {
     selector: Option<String>,
 }
 
+/// The image encodings a capture can be written in.
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+enum ImageFormat {
+    Png,
+    Jpeg,
+}
+
+impl ImageFormat {
+    /// The MIME type the encoder produces.
+    fn mime_type(self) -> &'static str {
+        match self {
+            ImageFormat::Png => "image/png",
+            ImageFormat::Jpeg => "image/jpeg",
+        }
+    }
+
+    /// The file extension that goes with the encoding.
+    fn extension(self) -> &'static str {
+        match self {
+            ImageFormat::Png => "png",
+            ImageFormat::Jpeg => "jpg",
+        }
+    }
+
+    /// The CDP format enum value.
+    fn cdp_format(self) -> CaptureScreenshotFormat {
+        match self {
+            ImageFormat::Png => CaptureScreenshotFormat::Png,
+            ImageFormat::Jpeg => CaptureScreenshotFormat::Jpeg,
+        }
+    }
+
+    /// Parse a format name from a parameter or a file extension.
+    fn parse(value: &str) -> Option<Self> {
+        match value
+            .trim()
+            .trim_start_matches('.')
+            .to_ascii_lowercase()
+            .as_str()
+        {
+            "png" => Some(ImageFormat::Png),
+            "jpg" | "jpeg" => Some(ImageFormat::Jpeg),
+            _ => None,
+        }
+    }
+}
+
+/// Decide which encoding a capture should use.
+///
+/// The destination path wins when it names an image format: the caller asked
+/// for a file called `shot.png`, so it gets PNG bytes. An explicit `format`
+/// parameter is honoured when the path does not settle the question, and JPEG
+/// is the fallback for everything else.
+fn resolve_format(requested: Option<&str>, output: Option<&str>) -> ImageFormat {
+    if let Some(path) = output {
+        if let Some(ext) = Path::new(path).extension().and_then(|e| e.to_str()) {
+            if let Some(format) = ImageFormat::parse(ext) {
+                return format;
+            }
+        }
+    }
+    requested
+        .and_then(ImageFormat::parse)
+        .unwrap_or(ImageFormat::Jpeg)
+}
+
+/// Identify an image's encoding from its leading bytes.
+fn sniff_mime_type(bytes: &[u8]) -> Option<&'static str> {
+    if bytes.starts_with(&[0x89, b'P', b'N', b'G', 0x0D, 0x0A, 0x1A, 0x0A]) {
+        Some("image/png")
+    } else if bytes.starts_with(&[0xFF, 0xD8, 0xFF]) {
+        Some("image/jpeg")
+    } else {
+        None
+    }
+}
+
 /// Take the image bytes for the requested scope.
 async fn capture_image(
     page: &Page,
     selector: Option<&str>,
     full_page: bool,
     quality: i64,
-    format_str: &str,
+    format: ImageFormat,
 ) -> Result<Capture, String> {
-    // Element screenshot — always PNG, uses element bounding box clip
+    // Element screenshot — cropped to the element's bounding box
     if let Some(sel) = selector {
         debug!("[screenshot] element crop: {sel}");
         let element = page
@@ -122,7 +209,7 @@ async fn capture_image(
             .map_err(|e| format!("element not found '{sel}': {e}"))?;
 
         let bytes = element
-            .screenshot(CaptureScreenshotFormat::Png)
+            .screenshot(format.cdp_format())
             .await
             .map_err(|e| format!("element screenshot failed: {e}"))?;
 
@@ -134,7 +221,7 @@ async fn capture_image(
 
         return Ok(Capture {
             bytes,
-            mime_type: "image/png",
+            mime_type: format.mime_type(),
             width,
             height,
             scope: "element",
@@ -143,18 +230,16 @@ async fn capture_image(
     }
 
     // Viewport or full-page screenshot
-    let (cdp_format, mime_type) = match format_str {
-        "png" => (CaptureScreenshotFormat::Png, "image/png"),
-        _ => (CaptureScreenshotFormat::Jpeg, "image/jpeg"),
-    };
-
     let scope = if full_page { "fullPage" } else { "viewport" };
-    debug!("[screenshot] {scope} capture, format={format_str}, quality={quality}");
+    debug!(
+        "[screenshot] {scope} capture, format={}, quality={quality}",
+        format.extension()
+    );
 
-    let mut builder = ScreenshotParams::builder().format(cdp_format);
+    let mut builder = ScreenshotParams::builder().format(format.cdp_format());
 
     // Quality only applies to JPEG
-    if format_str != "png" {
+    if format == ImageFormat::Jpeg {
         builder = builder.quality(quality);
     }
 
@@ -181,7 +266,7 @@ async fn capture_image(
 
     Ok(Capture {
         bytes,
-        mime_type,
+        mime_type: format.mime_type(),
         width,
         height,
         scope,
@@ -383,5 +468,52 @@ mod tests {
             );
             assert!(name.ends_with(".png"));
         }
+    }
+
+    #[test]
+    fn the_output_extension_decides_the_encoding() {
+        // A `.png` path has to hold PNG bytes, whatever the format flag says.
+        assert_eq!(
+            resolve_format(Some("jpeg"), Some("/tmp/shot.png")),
+            ImageFormat::Png
+        );
+        assert_eq!(
+            resolve_format(None, Some("/tmp/shot.png")),
+            ImageFormat::Png
+        );
+        assert_eq!(
+            resolve_format(Some("png"), Some("/tmp/shot.jpg")),
+            ImageFormat::Jpeg
+        );
+        assert_eq!(
+            resolve_format(None, Some("/tmp/shot.jpeg")),
+            ImageFormat::Jpeg
+        );
+    }
+
+    #[test]
+    fn the_format_parameter_applies_when_the_path_says_nothing() {
+        assert_eq!(resolve_format(Some("png"), None), ImageFormat::Png);
+        assert_eq!(resolve_format(Some("jpeg"), None), ImageFormat::Jpeg);
+        // No format and no path — JPEG is the default.
+        assert_eq!(resolve_format(None, None), ImageFormat::Jpeg);
+        // A path without a recognised image extension falls back to the flag.
+        assert_eq!(
+            resolve_format(Some("png"), Some("/tmp/shot.bin")),
+            ImageFormat::Png
+        );
+    }
+
+    #[test]
+    fn mime_type_is_read_from_the_bytes() {
+        assert_eq!(
+            sniff_mime_type(&[0x89, b'P', b'N', b'G', 0x0D, 0x0A, 0x1A, 0x0A, 0, 0]),
+            Some("image/png")
+        );
+        assert_eq!(
+            sniff_mime_type(&[0xFF, 0xD8, 0xFF, 0xE0, 0, 0]),
+            Some("image/jpeg")
+        );
+        assert_eq!(sniff_mime_type(b"not an image"), None);
     }
 }

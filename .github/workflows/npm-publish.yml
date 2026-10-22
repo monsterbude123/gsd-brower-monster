@@ -627,6 +627,13 @@ jobs:
   prerelease-verify:
     name: Verify @${{ needs.prerelease-publish.outputs.channel }} package
     needs: prerelease-publish
+    # `always()` is required here. Without it this job inherits the skip of any
+    # upstream job that was itself skipped — notably `create-github-release`,
+    # which is skipped when the release assets already exist. The result was that
+    # `prerelease-verify` never ran in token-auth mode, so `prod-release-plan`
+    # never ran either and `@latest` was never promoted from the prerelease
+    # channel.
+    if: ${{ always() && needs.prerelease-publish.result == 'success' }}
     runs-on: ubuntu-latest
     steps:
       - name: Install Node.js

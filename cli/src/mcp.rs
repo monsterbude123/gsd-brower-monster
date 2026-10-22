@@ -1348,7 +1348,7 @@ fn build_tool_list() -> Vec<Value> {
                     "full_page": { "type": "boolean", "default": false },
                     "selector": { "type": "string" },
                     "quality": { "type": "integer", "default": 80 },
-                    "format": { "type": "string", "default": "jpeg" },
+                    "format": { "type": "string", "enum": ["jpeg", "png"], "description": "Encoding to use. The output path's extension wins when it names an image format, so `output: \"a.png\"` writes PNG bytes." },
                     "output": { "type": "string", "description": "Write the image to this path and return it as `path` instead of base64." },
                     "save": { "type": "boolean", "default": false, "description": "Write the image into the artifacts directory under a generated name and return it as `path`." },
                     "include_data": { "type": "boolean", "description": "Also return the base64 payload. Off by default when the image is written to a file." },

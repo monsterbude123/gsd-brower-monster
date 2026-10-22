@@ -439,11 +439,11 @@ gsd-browser --session demo --no-narration-delay click "h1"
 
 ```bash
 gsd-browser screenshot                             # Screenshot to stdout (JPEG base64)
-gsd-browser screenshot --output page.png           # Write to file
+gsd-browser screenshot --output page.png           # Write to file — the extension picks the format
 gsd-browser screenshot --save                      # Write into the artifacts dir, generated name
-gsd-browser screenshot --format png                # Force PNG format
+gsd-browser screenshot --format png                # Force PNG (used when the path names no format)
 gsd-browser screenshot --full-page                 # Full scrollable page
-gsd-browser screenshot --selector "#hero"          # Crop to element (always PNG)
+gsd-browser screenshot --selector "#hero"          # Crop to element
 gsd-browser screenshot --quality 50                # JPEG quality 1-100 (default: 80)
 
 gsd-browser zoom-region --x 100 --y 200 --width 400 --height 300  # Capture region
