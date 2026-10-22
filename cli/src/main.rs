@@ -837,8 +837,31 @@ enum DaemonCmd {
     Health,
 }
 
-#[tokio::main]
-async fn main() {
+/// Windows gives the main thread a 1 MB stack, which the command tree clap
+/// derives from ~100 subcommands overflows in debug builds. Running the CLI on
+/// a thread with a roomier stack keeps `cargo run` and the integration tests
+/// working on Windows.
+const MAIN_STACK_SIZE: usize = 16 * 1024 * 1024;
+
+fn main() {
+    let worker = std::thread::Builder::new()
+        .stack_size(MAIN_STACK_SIZE)
+        .name("gsd-browser".to_string())
+        .spawn(|| {
+            tokio::runtime::Builder::new_multi_thread()
+                .enable_all()
+                .build()
+                .expect("build tokio runtime")
+                .block_on(run())
+        })
+        .expect("spawn main worker");
+
+    if worker.join().is_err() {
+        std::process::exit(1);
+    }
+}
+
+async fn run() {
     let mut cli = Cli::parse();
 
     // Load config (layers 1-4: defaults → user → project → env vars)

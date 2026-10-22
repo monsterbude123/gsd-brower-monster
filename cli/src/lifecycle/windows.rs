@@ -130,6 +130,11 @@ impl Platform for WindowsPlatform {
 
         const CREATE_NO_WINDOW: u32 = 0x08000000;
         cmd.creation_flags(CREATE_NO_WINDOW);
+
+        // Keep our own std handles out of the daemon's handle table. Otherwise
+        // the daemon inherits a CLI pipe's write end and holds it open, so
+        // anything reading the CLI's output never sees EOF.
+        crate::win_process::clear_std_handle_inherit_flags();
     }
 
     async fn wait_ready(

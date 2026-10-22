@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Hardened npm `postinstall` against missing `bin/` directories and unhandled write-stream errors by ensuring the destination directory exists immediately before `createWriteStream` and catching directory-creation failures.
 - Removed partially downloaded binaries when a postinstall download fails, deferring the cleanup until the write stream has closed so no corrupt or truncated file is left behind.
 - Prevented the postinstall script from running its downloader when required as a module from tests.
+- Windows: the daemon no longer inherits the spawning CLI's standard handles. Rust passes `bInheritHandles = TRUE` on Windows, so a daemon started by a CLI whose stdout was a pipe kept that pipe's write end open for its whole lifetime — piping any command's output (`gsd-browser navigate <url> | head`) hung forever instead of ending at EOF.
+- Windows: the CLI no longer overflows the main thread stack in debug builds. Windows gives the main thread a 1 MB stack, which the command tree clap derives from ~100 subcommands overflows, so every invocation — even `--version` — died with a stack overflow. The CLI now runs on a thread with a roomier stack.
 
 ### Added
 
