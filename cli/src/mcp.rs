@@ -1341,7 +1341,7 @@ fn build_tool_list() -> Vec<Value> {
         // === Visual & Evidence ===
         json!({
             "name": "browser_screenshot",
-            "description": "Capture screenshots (full page, element, or region). Returns base64 or can be written to disk. Use for visual verification or as evidence.",
+            "description": "Capture screenshots (full page, element, or region). Set `output` to write the image to a file and get its path back, or `save: true` to write it into the artifacts directory under a generated name. Without either, the image comes back as base64.",
             "inputSchema": {
                 "type": "object",
                 "properties": {
@@ -1349,6 +1349,9 @@ fn build_tool_list() -> Vec<Value> {
                     "selector": { "type": "string" },
                     "quality": { "type": "integer", "default": 80 },
                     "format": { "type": "string", "default": "jpeg" },
+                    "output": { "type": "string", "description": "Write the image to this path and return it as `path` instead of base64." },
+                    "save": { "type": "boolean", "default": false, "description": "Write the image into the artifacts directory under a generated name and return it as `path`." },
+                    "include_data": { "type": "boolean", "description": "Also return the base64 payload. Off by default when the image is written to a file." },
                     "session": { "type": "string" }
                 }
             }
@@ -2207,6 +2210,23 @@ async fn handle_tool_call(name: &str, arguments: Value, cli: &Cli) -> Result<Str
             if let Some(sel) = arguments.get("selector").and_then(|v| v.as_str()) {
                 params["selector"] = json!(sel);
             }
+            if let Some(quality) = arguments.get("quality").and_then(|v| v.as_u64()) {
+                params["quality"] = json!(quality);
+            }
+            if let Some(format) = arguments.get("format").and_then(|v| v.as_str()) {
+                params["format"] = json!(format);
+            }
+            if let Some(save) = arguments.get("save").and_then(|v| v.as_bool()) {
+                params["save"] = json!(save);
+            }
+            if let Some(include_data) = arguments.get("include_data").and_then(|v| v.as_bool()) {
+                params["include_data"] = json!(include_data);
+            }
+            // Resolve to an absolute path: the daemon's working directory is not
+            // the MCP client's.
+            if let Some(out) = arguments.get("output").and_then(|v| v.as_str()) {
+                params["output"] = json!(gsd_browser_common::absolute_path(out).to_string_lossy());
+            }
 
             let resp = crate::lifecycle::send_request(
                 "screenshot",
@@ -2221,7 +2241,21 @@ async fn handle_tool_call(name: &str, arguments: Value, cli: &Cli) -> Result<Str
             if let Some(err) = resp.error {
                 return Err(err.message);
             }
-            "Screenshot captured (base64 available in JSON mode)".to_string()
+
+            // Return the metadata so the agent knows where the image landed.
+            // The base64 payload is left out unless it was asked for — it is
+            // megabytes of text that no agent can read.
+            let mut result = resp.result.unwrap_or_else(|| json!({}));
+            if !arguments
+                .get("include_data")
+                .and_then(|v| v.as_bool())
+                .unwrap_or(false)
+            {
+                if let Some(obj) = result.as_object_mut() {
+                    obj.remove("data");
+                }
+            }
+            serde_json::to_string_pretty(&result).unwrap_or_else(|_| "{}".to_string())
         }
 
         "browser_act" => {

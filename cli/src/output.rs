@@ -398,7 +398,10 @@ pub fn format_text_screenshot(result: &Value) -> String {
         let kb = byte_len as f64 / 1024.0;
         out.push_str(&format!(" — {kb:.1} KB"));
     }
-    out.push_str("\nUse --json to get base64 data, or --output <path> to save to file");
+    match result.get("path").and_then(|v| v.as_str()) {
+        Some(path) => out.push_str(&format!("\nSaved to: {path}")),
+        None => out.push_str("\nUse --json to get base64 data, or --output <path> to save to file"),
+    }
     out
 }
 

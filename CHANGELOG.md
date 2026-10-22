@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Hardened npm `postinstall` against missing `bin/` directories and unhandled write-stream errors by ensuring the destination directory exists immediately before `createWriteStream` and catching directory-creation failures.
 - Removed partially downloaded binaries when a postinstall download fails, deferring the cleanup until the write stream has closed so no corrupt or truncated file is left behind.
 - Prevented the postinstall script from running its downloader when required as a module from tests.
+- MCP `browser_screenshot` now honours the `quality` and `format` arguments it advertises — they were silently dropped — and returns the capture metadata (dimensions, mime type, byte length) instead of a placeholder string.
+- MCP `browser_screenshot` no longer embeds the base64 payload in the response envelope by default; the image is opt-in through `include_data`.
 - Windows: the daemon no longer inherits the spawning CLI's standard handles. Rust passes `bInheritHandles = TRUE` on Windows, so a daemon started by a CLI whose stdout was a pipe kept that pipe's write end open for its whole lifetime — piping any command's output (`gsd-browser navigate <url> | head`) hung forever instead of ending at EOF.
 - Windows: the CLI no longer overflows the main thread stack in debug builds. Windows gives the main thread a 1 MB stack, which the command tree clap derives from ~100 subcommands overflows, so every invocation — even `--version` — died with a stack overflow. The CLI now runs on a thread with a roomier stack.
 
@@ -20,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Windows ARM64 release asset: `gsd-browser-windows-arm64.exe`.
 - npm install support for `win32-arm64`.
 - Unit tests for `postinstall.js` covering recursive directory creation, successful downloads into a missing `bin/`, and graceful rejection when the destination directory cannot be created.
+- Screenshot-to-file control across the CLI, the daemon, and MCP: `gsd-browser screenshot --output <path>` and `--save`, plus the `output` / `save` / `include_data` arguments on the `screenshot` daemon method and the `browser_screenshot` MCP tool. The daemon writes the raw image bytes and reports the path, so a full-page capture no longer crosses the IPC boundary as base64 text. `--output` resolves relative paths against the caller's working directory and appends the format extension when one is omitted; `--save` writes a timestamped name under `~/.gsd-browser/artifacts/screenshots/`.
 
 ## [0.1.31] - 2026-06-12
 

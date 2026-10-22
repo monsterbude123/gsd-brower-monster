@@ -440,6 +440,7 @@ gsd-browser --session demo --no-narration-delay click "h1"
 ```bash
 gsd-browser screenshot                             # Screenshot to stdout (JPEG base64)
 gsd-browser screenshot --output page.png           # Write to file
+gsd-browser screenshot --save                      # Write into the artifacts dir, generated name
 gsd-browser screenshot --format png                # Force PNG format
 gsd-browser screenshot --full-page                 # Full scrollable page
 gsd-browser screenshot --selector "#hero"          # Crop to element (always PNG)
@@ -451,6 +452,25 @@ gsd-browser zoom-region --x 0 --y 0 --width 200 --height 200 --scale 3  # Upscal
 gsd-browser save-pdf                               # Save page as PDF (A4 default)
 gsd-browser save-pdf --output report.pdf           # Custom output path
 gsd-browser save-pdf --format Letter               # Page format: A4, Letter, Legal, Tabloid
+```
+
+**Screenshot to a file instead of base64.** `--output <path>` and `--save` make the
+daemon write the raw image bytes and report the path; the base64 payload is left
+out of the response entirely, so a full-page capture never travels back as text.
+`--output` accepts a relative path (resolved against your current directory) and
+appends the format extension when you omit it — `--output shot` writes `shot.jpg`
+for a JPEG capture. `--save` picks a timestamped name from the page title under
+`~/.gsd-browser/artifacts/screenshots/` (or `$GSD_BROWSER_ARTIFACT_DIR`).
+
+The same knobs exist on the MCP tool: `browser_screenshot` accepts `output` (a
+path), `save` (generated name in the artifacts directory), and `include_data`
+(set it to also get the base64 payload). Without any of them the tool still
+returns metadata but no image bytes.
+
+```bash
+gsd-browser --json screenshot --output page.png
+# {"byteLength":74493,"height":1080,"mimeType":"image/jpeg",
+#  "path":"/abs/path/page.png","scope":"viewport","width":1920,"written":true}
 ```
 
 ### Visual Regression

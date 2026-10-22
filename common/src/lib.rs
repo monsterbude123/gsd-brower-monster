@@ -133,6 +133,23 @@ pub fn validate_session_name(session: Option<&str>) -> Result<Option<&str>, Stri
 
 // ── Paths ──
 
+/// Resolve a possibly-relative path to an absolute one against the current
+/// working directory.
+///
+/// Callers that hand paths to the daemon must do this first: the daemon is a
+/// long-lived background process whose working directory is whatever it was
+/// spawned with, not whatever the current CLI invocation happens to be in.
+pub fn absolute_path(input: &str) -> std::path::PathBuf {
+    let path = std::path::PathBuf::from(input);
+    if path.is_absolute() {
+        return path;
+    }
+    match std::env::current_dir() {
+        Ok(cwd) => cwd.join(path),
+        Err(_) => path,
+    }
+}
+
 /// Returns the directory for gsd-browser state files (~/.gsd-browser)
 pub fn state_dir() -> std::path::PathBuf {
     dirs::home_dir()

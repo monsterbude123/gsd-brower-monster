@@ -258,6 +258,9 @@ enum Commands {
         /// Output file path — writes raw image bytes to disk
         #[arg(long)]
         output: Option<String>,
+        /// Write into the artifacts directory under a generated name
+        #[arg(long)]
+        save: bool,
         /// Image format: jpeg or png (default: jpeg)
         #[arg(long, default_value = "jpeg")]
         format: String,
@@ -1077,6 +1080,7 @@ async fn run() {
             full_page,
             quality,
             output,
+            save,
             format,
         } => {
             cmd_screenshot(
@@ -1085,6 +1089,7 @@ async fn run() {
                 *full_page,
                 *quality,
                 output.as_deref(),
+                *save,
                 format,
             )
             .await
@@ -1847,6 +1852,7 @@ async fn cmd_screenshot(
     full_page: bool,
     quality: u32,
     output_path: Option<&str>,
+    save: bool,
     format: &str,
 ) -> CmdResult {
     let mut params = serde_json::json!({
@@ -1856,6 +1862,16 @@ async fn cmd_screenshot(
     });
     if let Some(sel) = selector {
         params["selector"] = serde_json::json!(sel);
+    }
+    if save {
+        params["save"] = serde_json::json!(true);
+    }
+    // Resolve to an absolute path before handing it to the daemon: the daemon is
+    // a long-lived background process whose working directory is not the one the
+    // user is in right now.
+    if let Some(path) = output_path {
+        params["output"] =
+            serde_json::json!(gsd_browser_common::absolute_path(path).to_string_lossy());
     }
 
     let resp = lifecycle::send_request(
@@ -1877,8 +1893,16 @@ async fn cmd_screenshot(
     }
 
     if let Some(result) = resp.result {
-        // If --output is specified, decode base64 and write raw bytes to file
-        if let Some(path) = output_path {
+        // The daemon writes the file itself and reports where it landed. Fall
+        // back to decoding the payload when talking to an older daemon that
+        // only knows how to return base64.
+        if result.get("path").is_some() {
+            if cli.json {
+                println!("{}", output::format_json(&result));
+            } else {
+                println!("{}", output::format_text_screenshot(&result));
+            }
+        } else if let Some(path) = output_path {
             let data_b64 = result
                 .get("data")
                 .and_then(|v| v.as_str())

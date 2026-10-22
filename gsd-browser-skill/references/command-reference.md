@@ -237,9 +237,14 @@ gsd-browser recording-export <id> --output ./evidence/
 ```bash
 gsd-browser screenshot --output page.png --full-page
 gsd-browser screenshot --selector "#hero" --format png
+gsd-browser screenshot --save
 gsd-browser save-pdf --output report.pdf --format A4
 gsd-browser zoom-region ...
 ```
+
+`--output` and `--save` make the daemon write the image file itself and return the
+path — the base64 payload stays out of the response. `--save` picks a timestamped
+name from the page title under `~/.gsd-browser/artifacts/screenshots/`.
 
 </visual>
 
