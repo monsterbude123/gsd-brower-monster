@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # gsd-browser installer
-# Usage: curl -fsSL https://raw.githubusercontent.com/open-gsd/gsd-browser/main/install.sh | bash
+# Usage: curl -fsSL https://raw.githubusercontent.com/monsterbude123/gsd-brower-monster/main/install.sh | bash
 #
 # For AI agents (recommended 2026+ path): After install, run `gsd-browser mcp` as your MCP server.
 #   - Tailored quickstart: $INSTALL_DIR/scripts/mcp-quickstart.sh cursor (or claude/vscode/generic)
@@ -13,7 +13,7 @@ set -euo pipefail
 #
 # Environment variables (advanced):
 #   GSD_BROWSER_VERSION       - install a specific version (default: latest)
-#   GSD_BROWSER_REPO          - repo for source files and release binaries (default: open-gsd/gsd-browser)
+#   GSD_BROWSER_REPO          - repo for source files and release binaries (default: monsterbude123/gsd-brower-monster)
 #   GSD_BROWSER_DIR           - override install directory (default: $HOME/.gsd-browser)
 #   GSD_BROWSER_INSTALL_MODE  - install or update (default: install)
 #   GSD_BROWSER_SKIP_CHROMIUM - skip Chrome/Chromium setup when set to 1
@@ -21,7 +21,7 @@ set -euo pipefail
 #   GSD_BROWSER_INSTALL_CODEX_PLUGIN - install the Codex Plugin when set to 1
 
 VERSION="${GSD_BROWSER_VERSION:-latest}"
-REPO="${GSD_BROWSER_REPO:-open-gsd/gsd-browser}"
+REPO="${GSD_BROWSER_REPO:-monsterbude123/gsd-brower-monster}"
 INSTALL_DIR="${GSD_BROWSER_DIR:-$HOME/.gsd-browser}"
 BIN_DIR="$INSTALL_DIR/bin"
 CHROMIUM_DIR="$INSTALL_DIR/chromium"

@@ -11,11 +11,11 @@
 
 ```bash
 # One-liner (macOS / Linux)
-curl -fsSL https://raw.githubusercontent.com/open-gsd/gsd-browser/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/monsterbude123/gsd-brower-monster/main/install.sh | bash
 
 # Or from a repo checkout
-git clone https://github.com/open-gsd/gsd-browser.git
-cd gsd-browser
+git clone https://github.com/monsterbude123/gsd-brower-monster.git
+cd gsd-brower-monster
 cargo install --path cli
 
 # Verify

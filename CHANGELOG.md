@@ -16,6 +16,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - MCP `browser_screenshot` no longer embeds the base64 payload in the response envelope by default; the image is opt-in through `include_data`.
 - Windows: the daemon no longer inherits the spawning CLI's standard handles. Rust passes `bInheritHandles = TRUE` on Windows, so a daemon started by a CLI whose stdout was a pipe kept that pipe's write end open for its whole lifetime — piping any command's output (`gsd-browser navigate <url> | head`) hung forever instead of ending at EOF.
 - Windows: the CLI no longer overflows the main thread stack in debug builds. Windows gives the main thread a 1 MB stack, which the command tree clap derives from ~100 subcommands overflows, so every invocation — even `--version` — died with a stack overflow. The CLI now runs on a thread with a roomier stack.
+- Windows: `npm run build` no longer fails with `ERR_INVALID_ARG_TYPE`. It spawns `npm.cmd`, which Node refuses to launch without a shell since the CVE-2024-27980 fix, so the pack check never ran and `npm publish` was blocked on Windows.
+
+### Changed
+
+- The npm package is now published as `@monsterbude123/gsd-brower-monster` from this fork. The `postinstall` step downloads the native binary from this repository's GitHub releases instead of the upstream project's, so the published package and the binary it installs always come from the same source tree. The installer's default source repository, the release/publish workflows, and the documentation now point at `monsterbude123/gsd-brower-monster` as well.
 
 ### Added
 
@@ -23,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - npm install support for `win32-arm64`.
 - Unit tests for `postinstall.js` covering recursive directory creation, successful downloads into a missing `bin/`, and graceful rejection when the destination directory cannot be created.
 - Screenshot-to-file control across the CLI, the daemon, and MCP: `gsd-browser screenshot --output <path>` and `--save`, plus the `output` / `save` / `include_data` arguments on the `screenshot` daemon method and the `browser_screenshot` MCP tool. The daemon writes the raw image bytes and reports the path, so a full-page capture no longer crosses the IPC boundary as base64 text. `--output` resolves relative paths against the caller's working directory and appends the format extension when one is omitted; `--save` writes a timestamped name under `~/.gsd-browser/artifacts/screenshots/`.
+- A package test asserting the published package and its binary source stay on the same repository, so the two cannot drift apart silently.
 
 ## [0.1.31] - 2026-06-12
 

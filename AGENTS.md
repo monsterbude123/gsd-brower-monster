@@ -31,10 +31,10 @@ See:
 ### Installation
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/open-gsd/gsd-browser/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/monsterbude123/gsd-brower-monster/main/install.sh | bash
 
 # install the Codex Plugin integration too
-curl -fsSL https://raw.githubusercontent.com/open-gsd/gsd-browser/main/install.sh | bash -s -- --codex-plugin
+curl -fsSL https://raw.githubusercontent.com/monsterbude123/gsd-brower-monster/main/install.sh | bash -s -- --codex-plugin
 
 # or from a repo checkout
 cargo install --path cli

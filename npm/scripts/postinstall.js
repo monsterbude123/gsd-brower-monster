@@ -5,7 +5,7 @@ const fs = require("fs");
 const path = require("path");
 const https = require("https");
 
-const REPO = "open-gsd/gsd-browser";
+const REPO = "monsterbude123/gsd-brower-monster";
 
 const PLATFORM_MAP = {
   "darwin-arm64": "gsd-browser-darwin-arm64",
@@ -161,9 +161,9 @@ async function main() {
         `  ${e2.message}\n` +
         `  You can build from a repo checkout:\n` +
         `    git clone https://github.com/${REPO}.git\n` +
-        `    cd gsd-browser\n` +
+        `    cd gsd-brower-monster\n` +
         `    cargo install --path cli\n` +
-        `  Or use the installer: curl -fsSL https://raw.githubusercontent.com/open-gsd/gsd-browser/main/install.sh | bash`
+        `  Or use the installer: curl -fsSL https://raw.githubusercontent.com/${REPO}/main/install.sh | bash`
       );
       process.exit(1);
     }

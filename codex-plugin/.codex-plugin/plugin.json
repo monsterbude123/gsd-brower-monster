@@ -7,7 +7,7 @@
     "url": "https://github.com/open-gsd"
   },
   "homepage": "https://opengsd.net/",
-  "repository": "https://github.com/open-gsd/gsd-browser",
+  "repository": "https://github.com/monsterbude123/gsd-brower-monster",
   "license": "MIT OR Apache-2.0",
   "keywords": [
     "browser",
@@ -26,7 +26,7 @@
   "interface": {
     "displayName": "gsd-browser",
     "shortDescription": "Inspect, test, debug, and document web apps with Chrome/Chromium.",
-    "longDescription": "Use gsd-browser when an AI agent needs real browser control. Features: navigate pages, click, type, fill forms, take screenshots, capture stable snapshot refs, run assertions and waits, extract structured data, compare visual diffs, inspect console/network behavior, mock or block requests, emulate devices, save auth state, record evidence bundles, and open a live viewer for human handoff. How to use it: ask your agent to inspect a URL or localhost app, verify a user flow before shipping, debug a broken page, capture screenshots, scrape page data, or show you the browser while it works. Open GSD: https://opengsd.net/. GitHub repo and docs: https://github.com/open-gsd/gsd-browser.",
+    "longDescription": "Use gsd-browser when an AI agent needs real browser control. Features: navigate pages, click, type, fill forms, take screenshots, capture stable snapshot refs, run assertions and waits, extract structured data, compare visual diffs, inspect console/network behavior, mock or block requests, emulate devices, save auth state, record evidence bundles, and open a live viewer for human handoff. How to use it: ask your agent to inspect a URL or localhost app, verify a user flow before shipping, debug a broken page, capture screenshots, scrape page data, or show you the browser while it works. Open GSD: https://opengsd.net/. GitHub repo and docs: https://github.com/monsterbude123/gsd-brower-monster.",
     "developerName": "open-gsd",
     "category": "Coding",
     "capabilities": [

@@ -1,15 +1,15 @@
 {
-  "name": "@opengsd/gsd-browser",
+  "name": "@monsterbude123/gsd-brower-monster",
   "version": "0.2.2",
   "description": "Browser automation CLI powered by Chrome DevTools Protocol — 92 commands for navigation, interaction, live viewing, annotations, recording bundles, screenshots, accessibility, network mocking, visual diffing, and more.",
   "license": "MIT OR Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/open-gsd/gsd-browser.git"
+    "url": "git+https://github.com/monsterbude123/gsd-brower-monster.git"
   },
-  "homepage": "https://github.com/open-gsd/gsd-browser",
+  "homepage": "https://github.com/monsterbude123/gsd-brower-monster",
   "bugs": {
-    "url": "https://github.com/open-gsd/gsd-browser/issues"
+    "url": "https://github.com/monsterbude123/gsd-brower-monster/issues"
   },
   "keywords": [
     "browser",

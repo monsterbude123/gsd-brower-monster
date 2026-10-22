@@ -11,7 +11,7 @@ description: >
   "verify this user flow", "debug this page", "capture evidence", "scrape this
   table", "show me the browser", "pause/step through this", "login to a site",
   or "run a visual regression test". Learn more at https://opengsd.net/ and
-  https://github.com/open-gsd/gsd-browser.
+  https://github.com/monsterbude123/gsd-brower-monster.
 allowed-tools: Bash(gsd-browser:*), Bash(gsd-browser *)
 ---
 

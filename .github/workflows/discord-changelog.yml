@@ -32,12 +32,12 @@ jobs:
             node scripts/release-notes/discord-release-summary.cjs \
               --tag "$RELEASE_TAG" \
               --repo "$GITHUB_REPOSITORY" \
-              --package "@opengsd/gsd-browser" \
+              --package "@monsterbude123/gsd-brower-monster" \
               --post
           else
             node scripts/release-notes/discord-release-summary.cjs \
               --latest \
               --repo "$GITHUB_REPOSITORY" \
-              --package "@opengsd/gsd-browser" \
+              --package "@monsterbude123/gsd-brower-monster" \
               --post
           fi

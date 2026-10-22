@@ -41,24 +41,23 @@ Run `gsd-browser mcp` and unleash one of the most powerful browser surfaces avai
 ### npm
 
 ```bash
-npm install -g @opengsd/gsd-browser
+npm install -g @monsterbude123/gsd-brower-monster
 ```
 
-Current release status:
+This fork publishes under the `@monsterbude123` scope. The `postinstall` step
+downloads the native binary from this repository's GitHub releases, so the
+published package and the binary it installs always come from the same source
+tree.
 
-- GitHub latest release: [`v0.1.31`](https://github.com/open-gsd/gsd-browser/releases/tag/v0.1.31)
-- npm `dev` dist-tag: `@opengsd/gsd-browser@0.1.31`
-- npm `latest` dist-tag: `@opengsd/gsd-browser@0.1.29`
-
-To install the current GitHub release from npm before `latest` is promoted:
+To install a specific release:
 
 ```bash
-npm install -g @opengsd/gsd-browser@dev
+npm install -g @monsterbude123/gsd-brower-monster@0.2.2
 ```
 
 ### Pre-built binaries
 
-Download from [GitHub Releases](https://github.com/open-gsd/gsd-browser/releases):
+Download from [GitHub Releases](https://github.com/monsterbude123/gsd-brower-monster/releases):
 
 | Platform | Asset |
 |----------|-------|
@@ -72,8 +71,8 @@ Download from [GitHub Releases](https://github.com/open-gsd/gsd-browser/releases
 ### Build from source
 
 ```bash
-git clone https://github.com/open-gsd/gsd-browser.git
-cd gsd-browser
+git clone https://github.com/monsterbude123/gsd-brower-monster.git
+cd gsd-brower-monster
 cargo install --path cli
 ```
 
@@ -82,7 +81,7 @@ cargo install --path cli
 Install the CLI and register the Codex Plugin in one pass:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/open-gsd/gsd-browser/main/install.sh | bash -s -- --codex-plugin
+curl -fsSL https://raw.githubusercontent.com/monsterbude123/gsd-brower-monster/main/install.sh | bash -s -- --codex-plugin
 ```
 
 The installer writes the plugin to `~/plugins/gsd-browser`, updates the personal Codex marketplace at `~/.agents/plugins/marketplace.json`, and runs `codex plugin add gsd-browser@<marketplace>` when the Codex CLI is available. Without `--codex-plugin`, the interactive installer offers `OpenAI Codex Plugin` alongside the agent skill options.
@@ -91,7 +90,7 @@ The installer writes the plugin to `~/plugins/gsd-browser`, updates the personal
 
 The crates.io package (`gsd-browser`) is not published yet. Use GitHub release assets or a source build.
 
-The one-line installer (`curl -fsSL https://raw.githubusercontent.com/open-gsd/gsd-browser/main/install.sh | bash`) also sets up the `gsd-browser-skill/` pack for coding agents and documents the MCP path in its header.
+The one-line installer (`curl -fsSL https://raw.githubusercontent.com/monsterbude123/gsd-brower-monster/main/install.sh | bash`) also sets up the `gsd-browser-skill/` pack for coding agents and documents the MCP path in its header.
 
 ## Quick Start
 

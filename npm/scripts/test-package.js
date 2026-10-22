@@ -98,7 +98,7 @@ function testLauncherExecutesNativeBinary() {
   }
 }
 
-assert(pkg.name === "@opengsd/gsd-browser", "package name changed unexpectedly");
+assert(pkg.name === "@monsterbude123/gsd-brower-monster", "package name changed unexpectedly");
 assert(pkg.version === manifestVersion("cli/Cargo.toml"), "npm version must match cli crate");
 assert(pkg.version === manifestVersion("common/Cargo.toml"), "npm version must match common crate");
 assert(pkg.license === "MIT OR Apache-2.0", "package license changed unexpectedly");
@@ -132,6 +132,18 @@ for (const asset of [
 ]) {
   assert(postinstall.includes(asset), `postinstall must know release asset ${asset}`);
 }
+
+// The binary must be downloaded from the same repository the package lives in,
+// otherwise the postinstall would pull upstream builds under the fork's name.
+const expectedRepo = "monsterbude123/gsd-brower-monster";
+assert(
+  postinstall.includes(`const REPO = "${expectedRepo}"`),
+  `postinstall must download release assets from ${expectedRepo}`
+);
+assert(
+  (pkg.repository?.url || "").includes(expectedRepo),
+  "package repository must point at the fork that publishes the binaries"
+);
 
 testMissingNativeBinary();
 testLauncherExecutesNativeBinary();

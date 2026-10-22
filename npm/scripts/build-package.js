@@ -30,11 +30,18 @@ function parsePackOutput(stdout) {
 const result = spawnSync(npmCommand, ["pack", "--dry-run", "--json"], {
   cwd: packageRoot,
   encoding: "utf8",
+  // Node refuses to spawn a .cmd shim without a shell since the CVE-2024-27980
+  // fix, so npm.cmd only works this way on Windows.
+  shell: process.platform === "win32",
 });
 
+if (result.error) {
+  fail(`could not run npm pack --dry-run: ${result.error.message}`);
+}
+
 if (result.status !== 0) {
-  process.stderr.write(result.stderr);
-  process.stdout.write(result.stdout);
+  if (result.stderr) process.stderr.write(result.stderr);
+  if (result.stdout) process.stdout.write(result.stdout);
   fail(`npm pack --dry-run exited with ${result.status}`);
 }
 
