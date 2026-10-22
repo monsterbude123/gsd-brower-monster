@@ -38,3 +38,6 @@ spikes/
 PR_DESCRIPTION.md
 pr-description*.md
 *.pr.md
+
+# ZCode local session state
+.zcode/
