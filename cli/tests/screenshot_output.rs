@@ -217,6 +217,40 @@ fn is_png(bytes: &[u8]) -> bool {
     bytes.len() > 8 && &bytes[0..8] == b"\x89PNG\r\n\x1a\n"
 }
 
+/// Read the pixel dimensions out of a PNG's IHDR chunk.
+fn png_dimensions(bytes: &[u8]) -> (u64, u64) {
+    assert!(is_png(bytes), "expected PNG magic bytes");
+    let width = u32::from_be_bytes([bytes[16], bytes[17], bytes[18], bytes[19]]);
+    let height = u32::from_be_bytes([bytes[20], bytes[21], bytes[22], bytes[23]]);
+    (width as u64, height as u64)
+}
+
+/// Read the pixel dimensions out of a JPEG's first frame header.
+fn jpeg_dimensions(bytes: &[u8]) -> (u64, u64) {
+    assert!(is_jpeg(bytes), "expected JPEG magic bytes");
+    let mut offset = 2;
+    while offset + 9 < bytes.len() {
+        if bytes[offset] != 0xFF {
+            offset += 1;
+            continue;
+        }
+        let marker = bytes[offset + 1];
+        // SOF0/SOF1/SOF2 carry the frame dimensions.
+        if matches!(marker, 0xC0 | 0xC1 | 0xC2) {
+            let height = u16::from_be_bytes([bytes[offset + 5], bytes[offset + 6]]) as u64;
+            let width = u16::from_be_bytes([bytes[offset + 7], bytes[offset + 8]]) as u64;
+            return (width, height);
+        }
+        if marker == 0xD8 || marker == 0xD9 || (0xD0..=0xD7).contains(&marker) {
+            offset += 2;
+            continue;
+        }
+        let length = u16::from_be_bytes([bytes[offset + 2], bytes[offset + 3]]) as usize;
+        offset += 2 + length;
+    }
+    panic!("no JPEG frame header found");
+}
+
 fn open_page(env: &BrowserTestEnv, url: &str) {
     let _ = env.json(&["navigate".to_string(), url.to_string()]);
     let _ = env.json(&[
@@ -266,6 +300,12 @@ fn screenshot_output_writes_the_image_and_omits_the_base64_payload() {
         result["byteLength"].as_u64().unwrap_or(0),
         bytes.len() as u64,
         "reported byte length should match the file"
+    );
+    let (width, height) = jpeg_dimensions(&bytes);
+    assert_eq!(
+        (result["width"].as_u64(), result["height"].as_u64()),
+        (Some(width), Some(height)),
+        "reported dimensions should match the captured image, not a DOM measurement"
     );
 }
 
@@ -320,6 +360,41 @@ fn screenshot_element_crop_is_written_as_png() {
 
     let bytes = fs::read(&target).expect("element screenshot written");
     assert!(is_png(&bytes), "expected PNG magic bytes");
+    let (width, height) = png_dimensions(&bytes);
+    assert_eq!(
+        (result["width"].as_u64(), result["height"].as_u64()),
+        (Some(width), Some(height)),
+        "reported dimensions should match the cropped image"
+    );
+}
+
+#[test]
+fn screenshot_reports_the_dimensions_of_the_png_it_wrote() {
+    let _guard = browser_test_lock()
+        .lock()
+        .unwrap_or_else(|poison| poison.into_inner());
+    let env = BrowserTestEnv::new("png-format");
+    let server = test_server();
+    open_page(&env, &server.base_url());
+
+    let target = env.home.join("shot.png");
+    let result = env.json(&[
+        "screenshot".to_string(),
+        "--format".to_string(),
+        "png".to_string(),
+        "--output".to_string(),
+        target.to_string_lossy().to_string(),
+    ]);
+
+    assert_eq!(result["mimeType"], "image/png");
+    let bytes = fs::read(&target).expect("png screenshot written");
+    assert!(is_png(&bytes), "expected PNG magic bytes");
+    let (width, height) = png_dimensions(&bytes);
+    assert_eq!(
+        (result["width"].as_u64(), result["height"].as_u64()),
+        (Some(width), Some(height)),
+        "reported dimensions should match the PNG that was written"
+    );
 }
 
 #[test]

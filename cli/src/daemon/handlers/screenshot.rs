@@ -2,7 +2,9 @@ use base64::{engine::general_purpose::STANDARD as BASE64, Engine};
 use chromiumoxide::cdp::browser_protocol::page::CaptureScreenshotFormat;
 use chromiumoxide::page::ScreenshotParams;
 use chromiumoxide::Page;
+use image::ImageReader;
 use serde_json::{json, Value};
+use std::io::Cursor;
 use std::path::{Path, PathBuf};
 use tracing::debug;
 
@@ -124,14 +126,17 @@ async fn capture_image(
             .await
             .map_err(|e| format!("element screenshot failed: {e}"))?;
 
-        // Get element bounding box for dimensions
-        let dims = get_element_dimensions(page, sel).await;
+        // The captured pixels are the truth; the DOM box is only a fallback.
+        let (width, height) = match image_dimensions(&bytes) {
+            Some(dims) => dims,
+            None => get_element_dimensions(page, sel).await,
+        };
 
         return Ok(Capture {
             bytes,
             mime_type: "image/png",
-            width: dims.0,
-            height: dims.1,
+            width,
+            height,
             scope: "element",
             selector: Some(sel.to_string()),
         });
@@ -164,11 +169,14 @@ async fn capture_image(
         .await
         .map_err(|e| format!("screenshot failed: {e}"))?;
 
-    // Get viewport dimensions for metadata
-    let (width, height) = if full_page {
-        get_full_page_dimensions(page).await
-    } else {
-        get_viewport_dimensions(page).await
+    // The captured pixels are the truth. A DOM measurement reports the layout
+    // viewport, which excludes the scrollbar and disagrees with what was
+    // actually captured — a full-page shot is the window size, not the scroll
+    // area minus the scrollbar.
+    let (width, height) = match image_dimensions(&bytes) {
+        Some(dims) => dims,
+        None if full_page => get_full_page_dimensions(page).await,
+        None => get_viewport_dimensions(page).await,
     };
 
     Ok(Capture {
@@ -179,6 +187,15 @@ async fn capture_image(
         scope,
         selector: None,
     })
+}
+
+/// Read an image's pixel dimensions straight from its header.
+fn image_dimensions(bytes: &[u8]) -> Option<(u64, u64)> {
+    let reader = ImageReader::new(Cursor::new(bytes))
+        .with_guessed_format()
+        .ok()?;
+    let (width, height) = reader.into_dimensions().ok()?;
+    Some((width as u64, height as u64))
 }
 
 /// Decide where the image should be written, if anywhere.
