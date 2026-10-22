@@ -506,14 +506,14 @@ jobs:
           fi
 
           VERSION=$(node -e 'process.stdout.write(require("./package.json").version)')
-          EXISTING=$(npm view "@monsterbude123/gsd-brower-monster@${VERSION}" version 2>/dev/null || true)
+          EXISTING=$(npm view "@monsterbude/gsd-brower-monster@${VERSION}" version 2>/dev/null || true)
           if [ -n "${EXISTING}" ]; then
-            TAGGED=$(npm view "@monsterbude123/gsd-brower-monster" "dist-tags.${CHANNEL}" 2>/dev/null || true)
+            TAGGED=$(npm view "@monsterbude/gsd-brower-monster" "dist-tags.${CHANNEL}" 2>/dev/null || true)
             if [ "${TAGGED}" = "${VERSION}" ]; then
               echo "Version ${VERSION} is already published and @${CHANNEL} points to it - skipping publish."
               exit 0
             fi
-            LATEST_TAGGED=$(npm view "@monsterbude123/gsd-brower-monster" "dist-tags.latest" 2>/dev/null || true)
+            LATEST_TAGGED=$(npm view "@monsterbude/gsd-brower-monster" "dist-tags.latest" 2>/dev/null || true)
             if [ "${REQUESTED_CHANNEL}" = "latest" ] && [ "${LATEST_TAGGED}" = "${VERSION}" ]; then
               echo "Version ${VERSION} is already published and @latest points to it - skipping @${CHANNEL} prerelease publish."
               exit 0
@@ -523,8 +523,8 @@ jobs:
                 npm config set //registry.npmjs.org/:_authToken "${REPAIR_NODE_AUTH_TOKEN}"
               fi
               echo "Version ${VERSION} is already published; moving @${CHANNEL} to it with token auth."
-              npm dist-tag add "@monsterbude123/gsd-brower-monster@${VERSION}" "${CHANNEL}"
-              TAGGED=$(npm view "@monsterbude123/gsd-brower-monster" "dist-tags.${CHANNEL}" 2>/dev/null || true)
+              npm dist-tag add "@monsterbude/gsd-brower-monster@${VERSION}" "${CHANNEL}"
+              TAGGED=$(npm view "@monsterbude/gsd-brower-monster" "dist-tags.${CHANNEL}" 2>/dev/null || true)
               if [ "${TAGGED}" != "${VERSION}" ]; then
                 echo "::error::@${CHANNEL} points to '${TAGGED:-<unset>}' not ${VERSION} after dist-tag update."
                 exit 1
@@ -533,7 +533,7 @@ jobs:
               exit 0
             fi
             echo "::error::Version ${VERSION} already exists but @${CHANNEL} points to '${TAGGED:-<unset>}'."
-            echo "::error::Move the tag manually if intended: npm dist-tag add @monsterbude123/gsd-brower-monster@${VERSION} ${CHANNEL}"
+            echo "::error::Move the tag manually if intended: npm dist-tag add @monsterbude/gsd-brower-monster@${VERSION} ${CHANNEL}"
             exit 1
           fi
 
@@ -542,10 +542,10 @@ jobs:
           else
             if echo "$OUTPUT" | grep -q "cannot publish over the previously published\|You cannot publish over"; then
               echo "Version ${VERSION} was published concurrently - verifying @${CHANNEL} tag."
-              TAGGED=$(npm view "@monsterbude123/gsd-brower-monster" "dist-tags.${CHANNEL}" 2>/dev/null || true)
+              TAGGED=$(npm view "@monsterbude/gsd-brower-monster" "dist-tags.${CHANNEL}" 2>/dev/null || true)
               if [ "${TAGGED}" != "${VERSION}" ]; then
                 echo "::error::@${CHANNEL} points to '${TAGGED:-<unset>}' not ${VERSION} after concurrent publish."
-                echo "::error::Move the tag manually if intended: npm dist-tag add @monsterbude123/gsd-brower-monster@${VERSION} ${CHANNEL}"
+                echo "::error::Move the tag manually if intended: npm dist-tag add @monsterbude/gsd-brower-monster@${VERSION} ${CHANNEL}"
                 exit 1
               fi
               echo "Confirmed: @${CHANNEL} -> ${VERSION} (from concurrent publish)."
@@ -638,21 +638,21 @@ jobs:
       - name: Use npm 11
         run: npm install -g npm@11
 
-      - name: Install published @monsterbude123/gsd-brower-monster@${{ needs.prerelease-publish.outputs.version }}
+      - name: Install published @monsterbude/gsd-brower-monster@${{ needs.prerelease-publish.outputs.version }}
         if: ${{ !inputs.dry_run }}
         env:
           PUBLISH_VERSION: ${{ needs.prerelease-publish.outputs.version }}
           CHANNEL: ${{ needs.prerelease-publish.outputs.channel }}
         run: |
           for attempt in 1 2 3 4 5 6; do
-            if npm install -g "@monsterbude123/gsd-brower-monster@${PUBLISH_VERSION}"; then
+            if npm install -g "@monsterbude/gsd-brower-monster@${PUBLISH_VERSION}"; then
               exit 0
             fi
             echo "Attempt ${attempt} failed - waiting 10s for npm registry propagation..."
             sleep 10
           done
-          echo "::error::Failed to install @monsterbude123/gsd-brower-monster@${PUBLISH_VERSION} after 6 attempts."
-          echo "::error::Recommended actions: (1) investigate the failing step above, (2) if the version exists on npm, deprecate it with 'npm deprecate @monsterbude123/gsd-brower-monster@${PUBLISH_VERSION} \"broken ${CHANNEL} build; see Actions run\"', (3) cut a fix and re-run NPM Publish."
+          echo "::error::Failed to install @monsterbude/gsd-brower-monster@${PUBLISH_VERSION} after 6 attempts."
+          echo "::error::Recommended actions: (1) investigate the failing step above, (2) if the version exists on npm, deprecate it with 'npm deprecate @monsterbude/gsd-brower-monster@${PUBLISH_VERSION} \"broken ${CHANNEL} build; see Actions run\"', (3) cut a fix and re-run NPM Publish."
           exit 1
 
       - name: Smoke installed package
@@ -709,13 +709,13 @@ jobs:
         env:
           VERSION: ${{ needs.prod-release-plan.outputs.version }}
         run: |
-          TAGGED=$(npm view "@monsterbude123/gsd-brower-monster" "dist-tags.latest" 2>/dev/null || true)
+          TAGGED=$(npm view "@monsterbude/gsd-brower-monster" "dist-tags.latest" 2>/dev/null || true)
           if [ "${TAGGED}" = "${VERSION}" ]; then
             echo "Confirmed: @latest already points to ${VERSION}."
             exit 0
           fi
 
-          EXISTING=$(npm view "@monsterbude123/gsd-brower-monster@${VERSION}" version 2>/dev/null || true)
+          EXISTING=$(npm view "@monsterbude/gsd-brower-monster@${VERSION}" version 2>/dev/null || true)
           if [ -n "${EXISTING}" ]; then
             echo "::error::Version ${VERSION} is already published, but @latest points to '${TAGGED:-<unset>}'."
             echo "::error::Trusted publishing only supports npm publish/stage publish, not dist-tag promotion. Cut a new version or use publish_auth=token for a one-time promotion."
@@ -726,7 +726,7 @@ jobs:
           npm config delete //registry.npmjs.org/:_authToken || true
           npm publish --access public --provenance --tag latest
           for ATTEMPT in $(seq 1 24); do
-            TAGGED=$(npm view "@monsterbude123/gsd-brower-monster" "dist-tags.latest" 2>/dev/null || true)
+            TAGGED=$(npm view "@monsterbude/gsd-brower-monster" "dist-tags.latest" 2>/dev/null || true)
             if [ "${TAGGED}" = "${VERSION}" ]; then
               break
             fi
@@ -745,7 +745,7 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           VERSION: ${{ needs.prod-release-plan.outputs.version }}
         run: |
-          TAGGED=$(npm view "@monsterbude123/gsd-brower-monster" "dist-tags.latest" 2>/dev/null || true)
+          TAGGED=$(npm view "@monsterbude/gsd-brower-monster" "dist-tags.latest" 2>/dev/null || true)
           if [ "${TAGGED}" = "${VERSION}" ]; then
             echo "@latest already points to ${VERSION}; no token needed."
             exit 0
@@ -762,13 +762,13 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           VERSION: ${{ needs.prod-release-plan.outputs.version }}
         run: |
-          TAGGED=$(npm view "@monsterbude123/gsd-brower-monster" "dist-tags.latest" 2>/dev/null || true)
+          TAGGED=$(npm view "@monsterbude/gsd-brower-monster" "dist-tags.latest" 2>/dev/null || true)
           if [ "${TAGGED}" = "${VERSION}" ]; then
             echo "Confirmed: @latest already points to ${VERSION}."
             exit 0
           fi
-          npm dist-tag add "@monsterbude123/gsd-brower-monster@${VERSION}" latest
-          TAGGED=$(npm view "@monsterbude123/gsd-brower-monster" "dist-tags.latest" 2>/dev/null || true)
+          npm dist-tag add "@monsterbude/gsd-brower-monster@${VERSION}" latest
+          TAGGED=$(npm view "@monsterbude/gsd-brower-monster" "dist-tags.latest" 2>/dev/null || true)
           if [ "${TAGGED}" != "${VERSION}" ]; then
             echo "::error::@latest points to '${TAGGED:-<unset>}' not ${VERSION} after promotion."
             exit 1

@@ -98,7 +98,7 @@ function testLauncherExecutesNativeBinary() {
   }
 }
 
-assert(pkg.name === "@monsterbude123/gsd-brower-monster", "package name changed unexpectedly");
+assert(pkg.name === "@monsterbude/gsd-brower-monster", "package name changed unexpectedly");
 assert(pkg.version === manifestVersion("cli/Cargo.toml"), "npm version must match cli crate");
 assert(pkg.version === manifestVersion("common/Cargo.toml"), "npm version must match common crate");
 assert(pkg.license === "MIT OR Apache-2.0", "package license changed unexpectedly");

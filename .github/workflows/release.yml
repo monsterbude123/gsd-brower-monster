@@ -326,7 +326,7 @@ jobs:
           node scripts/release-notes/discord-release-summary.cjs \
             --tag "$RELEASE_TAG" \
             --repo "$GITHUB_REPOSITORY" \
-            --package "@monsterbude123/gsd-brower-monster" \
+            --package "@monsterbude/gsd-brower-monster" \
             --post \
             --allow-missing-webhook
 

@@ -21,7 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- The npm package is now published as `@monsterbude123/gsd-brower-monster` from this fork. The `postinstall` step downloads the native binary from this repository's GitHub releases instead of the upstream project's, so the published package and the binary it installs always come from the same source tree. The installer's default source repository, the release/publish workflows, and the documentation now point at `monsterbude123/gsd-brower-monster` as well.
+- The npm package is now published as `@monsterbude/gsd-brower-monster` from this fork. The `postinstall` step downloads the native binary from this repository's GitHub releases instead of the upstream project's, so the published package and the binary it installs always come from the same source tree. The installer's default source repository, the release/publish workflows, and the documentation now point at `monsterbude123/gsd-brower-monster` as well.
 
 ### Added
 

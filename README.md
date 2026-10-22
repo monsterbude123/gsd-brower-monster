@@ -55,10 +55,10 @@ Run `gsd-browser mcp` and unleash one of the most powerful browser surfaces avai
 ### npm
 
 ```bash
-npm install -g @monsterbude123/gsd-brower-monster
+npm install -g @monsterbude/gsd-brower-monster
 ```
 
-This fork publishes under the `@monsterbude123` scope. The `postinstall` step
+This fork publishes under the `@monsterbude` scope. The `postinstall` step
 downloads the native binary from this repository's GitHub releases, so the
 published package and the binary it installs always come from the same source
 tree.
@@ -66,7 +66,7 @@ tree.
 To install a specific release:
 
 ```bash
-npm install -g @monsterbude123/gsd-brower-monster@0.2.2
+npm install -g @monsterbude/gsd-brower-monster@0.2.2
 ```
 
 ### Pre-built binaries
